@@ -69,11 +69,21 @@ function App() {
   };
 
   const handleClearData = () => {
+
     setData([]);
     setInputData('');
+
     setSelectedItem(null);
     setSearchTerm('');
+
     setError('');
+    setIsLoading(false);
+
+    setActiveTab('map');
+    setShowDataInput(false);
+
+    setSortField('original');
+    setSortDirection('asc');
   };
 
   const handleOpenBulkLookup = () => {

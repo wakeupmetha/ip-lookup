@@ -45,37 +45,50 @@ function SmoothMapController({ selectedItem, previousSelectedItem }) {
   const animationRef = useRef(null);
   
   useEffect(() => {
-    if (selectedItem && selectedItem.lat && selectedItem.lon) {
-      if (animationRef.current) {
-        map.stop();
-      }
-      
-      const currentZoom = map.getZoom();
-      const targetZoom = currentZoom < 8 ? 10 : Math.max(currentZoom, 8);
-      
-      animationRef.current = map.flyTo(
-        [selectedItem.lat, selectedItem.lon], 
-        targetZoom,
-        {
-          duration: 1.2,
-          easeLinearity: 0.1,
-          animate: true,
-          pan: {
-            animate: true,
-            duration: 1.2
-          },
-          zoom: {
-            animate: true,
-            duration: 1.2
-          }
+    const safeStopAnimation = () => {
+      try {
+        if (animationRef.current && map && map.stop) {
+          map.stop();
         }
-      );
+      } catch (error) {
+        console.warn('Ошибка при остановке анимации карты:', error);
+      } finally {
+        animationRef.current = null;
+      }
+    };
+
+    safeStopAnimation();
+
+    if (selectedItem && selectedItem.lat && selectedItem.lon && map) {
+      try {
+        const currentZoom = map.getZoom();
+        const targetZoom = currentZoom < 8 ? 10 : Math.max(currentZoom, 8);
+        
+        animationRef.current = map.flyTo(
+          [selectedItem.lat, selectedItem.lon], 
+          targetZoom,
+          {
+            duration: 1.2,
+            easeLinearity: 0.1,
+            animate: true,
+            pan: {
+              animate: true,
+              duration: 1.2
+            },
+            zoom: {
+              animate: true,
+              duration: 1.2
+            }
+          }
+        );
+      } catch (error) {
+        console.warn('Ошибка при запуске анимации карты:', error);
+        animationRef.current = null;
+      }
     }
     
     return () => {
-      if (animationRef.current) {
-        map.stop();
-      }
+      safeStopAnimation();
     };
   }, [selectedItem, map]);
   
