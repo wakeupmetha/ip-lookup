@@ -1,6 +1,16 @@
-export default function DataTable({ data, onRowSelect }) {
+export default function DataTable({ data, onRowSelect, sortField, sortDirection, onSort }) {
   const handleRowClick = (item) => {
     onRowSelect(item);
+  };
+
+  const handleHeaderClick = (field) => {
+    onSort(field);
+  };
+
+  const getSortIcon = (field) => {
+    if (sortField !== field) return '';
+    if (sortField === 'original') return '';
+    return sortDirection === 'asc' ? ' ↑' : ' ↓';
   };
 
   return (
@@ -8,14 +18,30 @@ export default function DataTable({ data, onRowSelect }) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>IP Адрес</th>
-            <th>Страна</th>
-            <th>Город</th>
-            <th>ISP</th>
-            <th>Организация</th>
-            <th>ASN</th>
-            <th>Широта</th>
-            <th>Долгота</th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('ip')}>
+              IP Адрес{getSortIcon('ip')}
+            </th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('country')}>
+              Страна{getSortIcon('country')}
+            </th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('city')}>
+              Город{getSortIcon('city')}
+            </th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('isp')}>
+              ISP{getSortIcon('isp')}
+            </th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('org')}>
+              Организация{getSortIcon('org')}
+            </th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('asn')}>
+              ASN{getSortIcon('asn')}
+            </th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('lat')}>
+              Широта{getSortIcon('lat')}
+            </th>
+            <th className="sortable-header" onClick={() => handleHeaderClick('lon')}>
+              Долгота{getSortIcon('lon')}
+            </th>
           </tr>
         </thead>
         <tbody>

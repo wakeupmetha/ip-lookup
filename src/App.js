@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
 import MapView from './components/MapView';
 import DataTable from './components/DataTable';
+import Statistics from './components/Statistics';
 import { parseGeoData } from './utils/parseGeoData';
 import './App.css';
 
 // отладочные примеры
 const sampleData = `8.8.8.8,"United States","Mountain View","California","94043","America/Los_Angeles","Google LLC","Google LLC","AS15169",37.4056,-122.0775,1000
 1.1.1.1,"Australia","Sydney","New South Wales","2000","Australia/Sydney","Cloudflare, Inc.","APNIC and Cloudflare DNS Resolver project","AS13335",-33.8688,151.2093,1000
-208.67.222.222,"United States","San Francisco","California","94102","America/Los_Angeles","Cisco OpenDNS, LLC","Cisco OpenDNS, LLC","AS36692",37.7749,-122.4194,1000`;
+95.173.136.71,Russia,Moscow,Moscow,103132,Europe/Moscow,"The Federal Guard Service of the Russian Federation",Rsnet,"AS8291 The Federal Guard Service of the Russian Federation",55.7487,37.6187
+184.24.77.32,Germany,"Frankfurt am Main",Hesse,60313,Europe/Berlin,"Akamai International B.V.","Akamai Technologies, Inc.","AS20940 Akamai International B.V.",50.1169,8.6837
+157.112.148.185,Japan,"Chiyoda City",Tokyo,100-8111,Asia/Tokyo,"Xserver Inc.","XSERVER Inc.","AS131965 Xserver Inc.",35.6916,139.768
+41.79.191.161,Zimbabwe,Harare,Harare,Unknown,Africa/Harare,"Powertel Communications",Telecel,"AS37184 Powertel Communications",-17.8351,31.1057
+200.160.0.10,Brazil,"São Paulo","São Paulo",01000-000,America/Cuiaba,"Núcleo de Inf. e Coord. do Ponto BR - NIC.BR","Núcleo de Inf. e Coord. do Ponto BR - NIC.BR","AS22548 Núcleo de Inf. e Coord. do Ponto BR - NIC.BR",-23.5558,-46.6396
+94.56.129.19,"United Arab Emirates",Dubai,Dubai,Unknown,Asia/Dubai,"EMIRATES TELECOMMUNICATIONS GROUP COMPANY (ETISALAT GROUP) PJSC","Crowne Plaza and Staybridge Suites Hotel","AS5384 Emirates Internet",25.0734,55.2979
+51.148.180.200,"United Kingdom",London,England,W1B,Europe/London,"Zen Internet Ltd","Zen Internet Ltd","AS13037 Zen Internet Ltd",51.5072,-0.127586
+31.15.32.100,Sweden,Gothenburg,"Västra Götaland County","400 10",Europe/Stockholm,"Tele2 Sverige AB","AddSecure AB","AS1257 Tele2 Sverige AB",57.7089,11.9746
+223.112.9.2,China,Qinnan,Jiangsu,Unknown,Asia/Shanghai,"China Mobile communications corporation","China Mobile","AS56046 China Mobile communications corporation",33.1402,119.789`;
 
 function App() {
   const [data, setData] = useState([]);
@@ -17,6 +26,9 @@ function App() {
   const [showDataInput, setShowDataInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('map');
+  const [sortField, setSortField] = useState('original');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
     const parsed = parseGeoData(sampleData);
@@ -37,11 +49,7 @@ function App() {
       if (parsed.length === 0) {
         setError('Не удалось распарсить данные. Проверьте формат данных.');
       } else {
-        setData(prevData => {
-          const existingIPs = new Set(prevData.map(item => item.ip));
-          const newItems = parsed.filter(item => !existingIPs.has(item.ip));
-          return [...prevData, ...newItems];
-        });
+        setData(parsed);
         setShowDataInput(false);
         setInputData('');
         setSelectedItem(null);
@@ -72,11 +80,81 @@ function App() {
     window.open('https://www.showmyip.com/bulk-ip-lookup/', '_blank', 'noopener,noreferrer');
   };
 
+  const handleSort = (field) => {
+    if (sortField === field) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else if (sortDirection === 'desc') {
+        setSortField('original');
+        setSortDirection('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortedData = (dataToSort) => {
+    if (sortField === 'original') {
+      return dataToSort;
+    }
+
+    const sorted = [...dataToSort].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortField) {
+        case 'country':
+          aValue = a.country || '';
+          bValue = b.country || '';
+          break;
+        case 'ip':
+          aValue = a.ip.split('.').map(num => parseInt(num).toString().padStart(3, '0')).join('.');
+          bValue = b.ip.split('.').map(num => parseInt(num).toString().padStart(3, '0')).join('.');
+          break;
+        case 'city':
+          aValue = a.city || '';
+          bValue = b.city || '';
+          break;
+        case 'isp':
+          aValue = a.isp || '';
+          bValue = b.isp || '';
+          break;
+        case 'org':
+          aValue = a.org || '';
+          bValue = b.org || '';
+          break;
+        case 'lat':
+          aValue = parseFloat(a.lat) || 0;
+          bValue = parseFloat(b.lat) || 0;
+          break;
+        case 'lon':
+          aValue = parseFloat(a.lon) || 0;
+          bValue = parseFloat(b.lon) || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      const comparison = aValue.toString().toLowerCase().localeCompare(bValue.toString().toLowerCase());
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  };
+
   const filteredData = data.filter(item => 
     item.ip.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.city.toLowerCase().includes(searchTerm.toLowerCase())
+    item.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.isp && item.isp.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (item.org && item.org.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const sortedAndFilteredData = getSortedData(filteredData);
 
   const placeholderText = `Вставьте ваши IP-данные здесь...
 
@@ -87,6 +165,22 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <h1>📍 IP Location Viewer</h1>
+        
+        {/* Система вкладок */}
+        <div className="tabs-container">
+          <button 
+            className={`tab-button ${activeTab === 'map' ? 'active' : ''}`}
+            onClick={() => setActiveTab('map')}
+          >
+            🗺️ Карта и данные
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'stats' ? 'active' : ''}`}
+            onClick={() => setActiveTab('stats')}
+          >
+            📊 Статистика
+          </button>
+        </div>
         
         <div className="controls-section">
           <div className="control-buttons">
@@ -181,58 +275,74 @@ function App() {
           )}
         </div>
         
-        <div className="search-container">
-          <input
-            type="text"
-            placeholder="Поиск по IP, стране или городу..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-        </div>
+        {activeTab === 'map' && (
+          <div className="search-and-sort-container">
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="Поиск по IP, стране, городу или ISP..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+          </div>
+        )}
       </header>
       
       <main className="main-content">
         {data.length > 0 ? (
           <>
-            <div className="map-section">
-              <MapView data={filteredData} onSelect={setSelectedItem} />
-            </div>
-            
-            {selectedItem && (
-              <div className="selected-info">
-                <h3>Выбранный IP: {selectedItem.ip}</h3>
-                <p><strong>Страна:</strong> {selectedItem.country}</p>
-                <p><strong>Город:</strong> {selectedItem.city}</p>
-                <p><strong>ISP:</strong> {selectedItem.isp}</p>
-                <p><strong>Координаты:</strong> {selectedItem.lat}, {selectedItem.lon}</p>
-              </div>
+            {activeTab === 'map' && (
+              <>
+                <div className="map-section">
+                  <MapView data={sortedAndFilteredData} onSelect={setSelectedItem} />
+                </div>
+                
+                {selectedItem && (
+                  <div className="selected-info">
+                    <h3>Выбранный IP: {selectedItem.ip}</h3>
+                    <p><strong>Страна:</strong> {selectedItem.country}</p>
+                    <p><strong>Город:</strong> {selectedItem.city}</p>
+                    <p><strong>ISP:</strong> {selectedItem.isp}</p>
+                    <p><strong>Координаты:</strong> {selectedItem.lat}, {selectedItem.lon}</p>
+                    <p>
+                      <strong>Подробная информация:</strong>{' '}
+                      <a 
+                        href={`https://ip-api.com/#${selectedItem.ip}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ip-api-link"
+                      >
+                        🔗 Открыть на ip-api.com
+                      </a>
+                    </p>
+                  </div>
+                )}
+                
+                <div className="table-section">
+                  <h2>Данные IP-адресов ({sortedAndFilteredData.length})</h2>
+                  <DataTable 
+                    data={sortedAndFilteredData} 
+                    onRowSelect={setSelectedItem}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                </div>
+              </>
             )}
             
-            <div className="table-section">
-              <h2>Данные IP-адресов ({filteredData.length})</h2>
-              <DataTable data={filteredData} onRowSelect={setSelectedItem} />
-            </div>
+            {activeTab === 'stats' && (
+              <Statistics data={data} />
+            )}
           </>
         ) : (
           <div className="empty-state">
             <div className="empty-content">
               <h2>🌍 Добро пожаловать в IP Location Viewer!</h2>
               <p>Загрузите ваши IP-данные, чтобы увидеть их на карте и в таблице.</p>
-              <div className="empty-actions">
-                <button 
-                  className="btn btn-primary btn-large"
-                  onClick={() => setShowDataInput(true)}
-                >
-                  📥 Начать загрузку данных
-                </button>
-                <button 
-                  className="btn btn-info btn-large"
-                  onClick={handleOpenBulkLookup}
-                >
-                  🌐 Получить данные IP
-                </button>
-              </div>
+              {}
             </div>
           </div>
         )}
