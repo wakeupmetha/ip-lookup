@@ -1,4 +1,4 @@
-export default function DataTable({ data, onRowSelect, sortField, sortDirection, onSort }) {
+export default function DataTable({ data, onRowSelect, sortField, sortDirection, onSort, selectedItem }) {
   const handleRowClick = (item) => {
     onRowSelect(item);
   };
@@ -45,22 +45,26 @@ export default function DataTable({ data, onRowSelect, sortField, sortDirection,
           </tr>
         </thead>
         <tbody>
-          {data.map((item, index) => (
-            <tr 
-              key={index} 
-              className="table-row"
-              onClick={() => handleRowClick(item)}
-            >
-              <td className="ip-cell">{item.ip}</td>
-              <td>{item.country}</td>
-              <td>{item.city}</td>
-              <td>{item.isp}</td>
-              <td>{item.org}</td>
-              <td>{item.asn}</td>
-              <td>{item.lat.toFixed(4)}</td>
-              <td>{item.lon.toFixed(4)}</td>
-            </tr>
-          ))}
+          {data.map((item, index) => {
+            const isSelected = selectedItem && selectedItem.ip === item.ip;
+            
+            return (
+              <tr 
+                key={index} 
+                className={`table-row ${isSelected ? 'selected' : ''}`}
+                onClick={() => handleRowClick(item)}
+              >
+                <td className="ip-cell">{item.ip}</td>
+                <td>{item.country}</td>
+                <td>{item.city}</td>
+                <td>{item.isp}</td>
+                <td>{item.org}</td>
+                <td>{item.asn}</td>
+                <td>{item.lat.toFixed(4)}</td>
+                <td>{item.lon.toFixed(4)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -8,7 +8,7 @@ import './App.css';
 // отладочные примеры
 const sampleData = `8.8.8.8,"United States","Mountain View","California","94043","America/Los_Angeles","Google LLC","Google LLC","AS15169",37.4056,-122.0775,1000
 1.1.1.1,"Australia","Sydney","New South Wales","2000","Australia/Sydney","Cloudflare, Inc.","APNIC and Cloudflare DNS Resolver project","AS13335",-33.8688,151.2093,1000
-95.173.136.71,Russia,Moscow,Moscow,103132,Europe/Moscow,"The Federal Guard Service of the Russian Federation",Rsnet,"AS8291 The Federal Guard Service of the Russian Federation",55.7487,37.6187
+95.173.136.71,Russia,Moscow,Moscow,103132,Europe/Moscow,"The Federal Guard Service of the Russian Federation",Rsnet,"AS8291 The Federal Guard Service of the Russian Federation",55.753194,37.619195, 1000
 184.24.77.32,Germany,"Frankfurt am Main",Hesse,60313,Europe/Berlin,"Akamai International B.V.","Akamai Technologies, Inc.","AS20940 Akamai International B.V.",50.1169,8.6837
 157.112.148.185,Japan,"Chiyoda City",Tokyo,100-8111,Asia/Tokyo,"Xserver Inc.","XSERVER Inc.","AS131965 Xserver Inc.",35.6916,139.768
 41.79.191.161,Zimbabwe,Harare,Harare,Unknown,Africa/Harare,"Powertel Communications",Telecel,"AS37184 Powertel Communications",-17.8351,31.1057
@@ -296,7 +296,11 @@ function App() {
             {activeTab === 'map' && (
               <>
                 <div className="map-section">
-                  <MapView data={sortedAndFilteredData} onSelect={setSelectedItem} />
+                  <MapView 
+                    data={sortedAndFilteredData} 
+                    onSelect={setSelectedItem}
+                    selectedItem={selectedItem}
+                  />
                 </div>
                 
                 {selectedItem && (
@@ -305,7 +309,19 @@ function App() {
                     <p><strong>Страна:</strong> {selectedItem.country}</p>
                     <p><strong>Город:</strong> {selectedItem.city}</p>
                     <p><strong>ISP:</strong> {selectedItem.isp}</p>
-                    <p><strong>Координаты:</strong> {selectedItem.lat}, {selectedItem.lon}</p>
+                    <p><strong>Организация:</strong> {selectedItem.org}</p>
+                    <p><strong>ASN:</strong> {selectedItem.asn}</p>
+                    <p>
+                      <strong>Координаты:</strong>{' '}
+                      <a 
+                        href={`https://maps.apple.com/?q=IP+${selectedItem.ip}&ll=${selectedItem.lat},${selectedItem.lon}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ip-api-link"
+                      >
+                        {selectedItem.lat}, {selectedItem.lon}
+                      </a>
+                    </p>
                     <p>
                       <strong>Подробная информация:</strong>{' '}
                       <a 
@@ -322,9 +338,11 @@ function App() {
                 
                 <div className="table-section">
                   <h2>Данные IP-адресов ({sortedAndFilteredData.length})</h2>
+                  {/*ataTable*/}
                   <DataTable 
                     data={sortedAndFilteredData} 
                     onRowSelect={setSelectedItem}
+                    selectedItem={selectedItem}
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}

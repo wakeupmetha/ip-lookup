@@ -320,13 +320,29 @@
   white-space: nowrap;
 }
 
+.selected-marker {
+  z-index: 1000 !important;
+}
+
+.normal-marker {
+  z-index: 100;
+}
+
+.leaflet-marker-icon {
+  transition: all 0.3s ease;
+}
+
 .table-row {
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .table-row:hover {
   background-color: #f8f9fa;
+}
+
+.table-row.selected {
+  border-left: 4px solid #34495e;
 }
 
 .ip-cell {
@@ -790,4 +806,77 @@
   .stat-grid-items {
     grid-template-columns: 1fr;
   }
+}
+
+.marker-dot {
+  border-radius: 50%;
+  border: 2px solid white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+  will-change: transform, background-color, box-shadow;
+}
+
+.normal-dot {
+  background-color: #3388ff;
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 2px 8px rgba(51, 136, 255, 0.4);
+}
+
+.selected-dot {
+  background-color: #ff4444;
+  width: 21px;
+  height: 21px;
+  box-shadow: 0 4px 16px rgba(255, 68, 68, 0.6);
+  transform: scale(1.1);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 4px 16px rgba(255, 68, 68, 0.6);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(255, 68, 68, 0.8);
+  }
+  100% {
+    box-shadow: 0 4px 16px rgba(255, 68, 68, 0.6);
+  }
+}
+
+.leaflet-map {
+  transform: translateZ(0);
+}
+
+.leaflet-marker-icon {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.table-row {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.table-row:hover {
+  background-color: #f8f9fa;
+  transform: translateX(2px);
+}
+
+.table-row.selected {
+  border-left: 4px solid #34495e;
+  transform: translateX(4px);
+}
+
+.leaflet-container {
+  background: #f8f9fa;
+}
+
+.leaflet-tile {
+  filter: none;
+  transition: opacity 0.2s;
 }
